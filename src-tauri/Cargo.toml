@@ -1,0 +1,30 @@
+[package]
+name = "wik52"
+version = "0.1.1"
+description = "Wik52 - Lightweight Corporate Calendar, Weeks & Time Zones"
+authors = ["Wik52"]
+edition = "2021"
+
+[lib]
+name = "wik52_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon", "image-png", "image-ico"] }
+tauri-plugin-opener = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+base64 = "0.22"
+image = { version = "0.25", default-features = false, features = ["png"] }
+window-vibrancy = "0.5"
+
+# Optimization profile for ultra-small, lightweight binary distribution
+[profile.release]
+opt-level = "z"     # Optimize for smallest binary size
+lto = true          # Enable Link Time Optimization across all crates
+codegen-units = 1   # Maximize size reduction
+panic = "abort"     # Strip unwinding code
+strip = true        # Automatically strip symbols and debug info
