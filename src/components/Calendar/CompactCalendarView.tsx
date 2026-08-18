@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Calendar, Maximize2, Settings, Minus, X, ChevronLeft, ChevronRight, Pin } from 'lucide-react';
+import { Calendar, Maximize2, Minus, X, ChevronLeft, ChevronRight, Pin } from 'lucide-react';
 import { format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import { invoke } from '@tauri-apps/api/core';
@@ -18,7 +18,6 @@ interface CompactCalendarViewProps {
   onViewDateChange: (date: Date) => void;
   onSelectDate: (date: Date) => void;
   onSwitchMode: (mode: 'flyout' | 'widget' | 'compact') => void;
-  onOpenSettings: () => void;
   onOpenAddDayModal: (date: Date, type: 'note' | 'reminder') => void;
   onOpenAddWeekModal: (weekNumber: number, year: number) => void;
   onUpdateSettings: (newSettings: Partial<AppSettings>) => void;
@@ -35,7 +34,6 @@ export const CompactCalendarView: React.FC<CompactCalendarViewProps> = ({
   onViewDateChange,
   onSelectDate,
   onSwitchMode,
-  onOpenSettings,
   onOpenAddDayModal,
   onOpenAddWeekModal,
   onUpdateSettings,
@@ -135,6 +133,10 @@ export const CompactCalendarView: React.FC<CompactCalendarViewProps> = ({
         height: '100vh',
         padding: 0,
         overflow: 'hidden',
+        backgroundColor:
+          settings.theme === 'light'
+            ? `rgba(248, 250, 252, ${settings.windowOpacity ?? 0.96})`
+            : `rgba(26, 31, 44, ${settings.windowOpacity ?? 0.94})`,
         '--window-opacity': settings.windowOpacity ?? 0.94,
       } as React.CSSProperties}
     >
@@ -184,11 +186,6 @@ export const CompactCalendarView: React.FC<CompactCalendarViewProps> = ({
             onClick={handleTogglePin}
           >
             <Pin size={12} />
-          </button>
-
-          {/* Settings */}
-          <button className="icon-button" title="Settings" onClick={onOpenSettings}>
-            <Settings size={12} />
           </button>
 
           {/* Minimize */}

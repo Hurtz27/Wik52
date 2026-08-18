@@ -193,7 +193,7 @@ button, input, select {
   flex-direction: column;
   width: 100vw;
   height: 100vh;
-  background: var(--bg-app);
+  background: rgba(26, 31, 44, var(--window-opacity, 0.94)) !important;
   backdrop-filter: blur(28px) saturate(180%);
   -webkit-backdrop-filter: blur(28px) saturate(180%);
   border: 1px solid var(--border-subtle);
@@ -201,6 +201,11 @@ button, input, select {
   box-shadow: var(--shadow-flyout);
   overflow: hidden;
   animation: fadeInFlyout 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.light-theme.flyout-container,
+.light-theme .flyout-container {
+  background: rgba(248, 250, 252, var(--window-opacity, 0.96)) !important;
 }
 
 @keyframes fadeInFlyout {

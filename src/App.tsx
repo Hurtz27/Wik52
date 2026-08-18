@@ -180,6 +180,12 @@ export function App() {
     }
   }, [settings.launchOnStartup]);
 
+  // Sync window background opacity globally across all views and modals
+  useEffect(() => {
+    const opacity = settings.windowOpacity ?? 0.94;
+    document.documentElement.style.setProperty('--window-opacity', opacity.toString());
+  }, [settings.windowOpacity]);
+
   // Load holidays for the view year, enabled countries, and enabled categories
   useEffect(() => {
     const year = viewDate.getFullYear();
@@ -257,7 +263,6 @@ export function App() {
             handleUpdateSettings({ windowMode: mode });
             invoke('set_window_mode', { mode });
           }}
-          onOpenSettings={() => setIsSettingsOpen(true)}
           onOpenAddDayModal={handleOpenAddDayModal}
           onOpenAddWeekModal={handleOpenAddWeekModal}
           onUpdateSettings={handleUpdateSettings}
@@ -299,7 +304,13 @@ export function App() {
       className={`flyout-container ${accentClass} ${
         settings.theme === 'light' ? 'light-theme' : ''
       }`}
-      style={{ '--window-opacity': settings.windowOpacity ?? 0.94 } as React.CSSProperties}
+      style={{
+        backgroundColor:
+          settings.theme === 'light'
+            ? `rgba(248, 250, 252, ${settings.windowOpacity ?? 0.96})`
+            : `rgba(26, 31, 44, ${settings.windowOpacity ?? 0.94})`,
+        '--window-opacity': settings.windowOpacity ?? 0.94,
+      } as React.CSSProperties}
     >
       {/* 1. Windows 11 TitleBar (Fixed at Top) */}
       <TitleBar
