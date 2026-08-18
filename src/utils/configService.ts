@@ -4,6 +4,7 @@ import { DEFAULT_INITIAL_TIMEZONES } from './timezoneData';
 
 const LOCAL_SETTINGS_BACKUP_KEY = 'wik52_settings_backup_v1';
 const LOCAL_DAY_ITEMS_BACKUP_KEY = 'wik52_day_items_backup_v1';
+let nativeSaveQueue: Promise<void> = Promise.resolve();
 
 export const DEFAULT_SETTINGS: AppSettings = {
   theme: 'dark',
@@ -100,19 +101,22 @@ export async function saveWik52Config(
 
   const jsonString = JSON.stringify(payload, null, 2);
 
-  // 1. Save to native AppData disk file via Rust IPC
-  try {
-    await invoke('save_app_config', { configJson: jsonString });
-  } catch (e) {
-    console.error('Failed to save config to disk:', e);
-  }
-
-  // 2. Mirror to localStorage as instant cache/backup
+  // Mirror immediately, then serialize native writes so an older save cannot finish last.
   try {
     localStorage.setItem(LOCAL_SETTINGS_BACKUP_KEY, JSON.stringify(settings));
     localStorage.setItem(LOCAL_DAY_ITEMS_BACKUP_KEY, JSON.stringify(dayItems));
   } catch (e) {
     console.error('Failed to save to local backup:', e);
+  }
+
+  nativeSaveQueue = nativeSaveQueue
+    .catch(() => undefined)
+    .then(() => invoke<void>('save_app_config', { configJson: jsonString }));
+
+  try {
+    await nativeSaveQueue;
+  } catch (e) {
+    console.error('Failed to save config to disk:', e);
   }
 }
 

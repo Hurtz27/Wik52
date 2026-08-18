@@ -45,6 +45,32 @@ export const CompactCalendarView: React.FC<CompactCalendarViewProps> = ({
     () => generateMonthGrid(viewDate, selectedDate, settings.firstDayOfWeek),
     [viewDate, selectedDate, settings.firstDayOfWeek]
   );
+  const holidaysByDate = useMemo(() => {
+    const index = new Map<string, Holiday[]>();
+    holidays.forEach((holiday) => {
+      index.set(holiday.date, [...(index.get(holiday.date) || []), holiday]);
+    });
+    return index;
+  }, [holidays]);
+  const dayItemsByDate = useMemo(() => {
+    const index = new Map<string, DayItem[]>();
+    dayItems.forEach((item) => {
+      if (item.targetType === 'day' && item.date) {
+        index.set(item.date, [...(index.get(item.date) || []), item]);
+      }
+    });
+    return index;
+  }, [dayItems]);
+  const weekItemsByWeek = useMemo(() => {
+    const index = new Map<string, DayItem[]>();
+    dayItems.forEach((item) => {
+      if (item.targetType === 'week' && item.weekNumber && item.year) {
+        const key = `${item.year}-${item.weekNumber}`;
+        index.set(key, [...(index.get(key) || []), item]);
+      }
+    });
+    return index;
+  }, [dayItems]);
 
   const handlePrevMonth = () => {
     onViewDateChange(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1));
@@ -191,12 +217,8 @@ export const CompactCalendarView: React.FC<CompactCalendarViewProps> = ({
 
           {/* Rows */}
           {monthRows.map((row) => {
-            const weekNotes = dayItems.filter(
-              (item) =>
-                item.targetType === 'week' &&
-                item.weekNumber === row.weekNumber &&
-                item.year === viewDate.getFullYear()
-            );
+            const weekNotes =
+              weekItemsByWeek.get(`${viewDate.getFullYear()}-${row.weekNumber}`) || [];
             const hasWeekNotes = weekNotes.length > 0;
 
             return (
@@ -233,10 +255,8 @@ export const CompactCalendarView: React.FC<CompactCalendarViewProps> = ({
                 {/* Days */}
                 {row.days.map((day) => {
                   const dayKey = formatDateKey(day.date);
-                  const dayHolidays = holidays.filter((h) => h.date === dayKey);
-                  const itemsForDay = dayItems.filter(
-                    (i) => i.targetType === 'day' && i.date === dayKey
-                  );
+                  const dayHolidays = holidaysByDate.get(dayKey) || [];
+                  const itemsForDay = dayItemsByDate.get(dayKey) || [];
                   const hasActiveReminder = itemsForDay.some((i) => i.type === 'reminder' && !i.completed);
                   const hasNote = itemsForDay.some((i) => i.type === 'note');
 

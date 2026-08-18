@@ -85,7 +85,7 @@ fn get_config_file_path(app: &AppHandle) -> Result<PathBuf, String> {
         .map_err(|e| format!("Failed to get app data dir: {}", e))?;
     
     if !dir.exists() {
-        let _ = fs::create_dir_all(&dir);
+        fs::create_dir_all(&dir).map_err(|e| format!("Failed to create app data dir: {}", e))?;
     }
     dir.push("wik52_config.json");
     Ok(dir)
@@ -106,10 +106,21 @@ fn get_app_config(app: AppHandle) -> Result<Option<String>, String> {
 
 #[tauri::command]
 fn save_app_config(app: AppHandle, config_json: String) -> Result<(), String> {
+    let config: serde_json::Value = serde_json::from_str(&config_json)
+        .map_err(|e| format!("Invalid config JSON: {}", e))?;
+    let is_valid = config.get("version").and_then(|value| value.as_u64()).is_some()
+        && config.get("settings").is_some_and(|value| value.is_object())
+        && config.get("dayItems").is_some_and(|value| value.is_array())
+        && config.get("lastSaved").and_then(|value| value.as_u64()).is_some();
+    if !is_valid {
+        return Err("Invalid config structure".to_string());
+    }
+
     let path = get_config_file_path(&app)?;
     if let Some(parent) = path.parent() {
         if !parent.exists() {
-            let _ = fs::create_dir_all(parent);
+            fs::create_dir_all(parent)
+                .map_err(|e| format!("Failed to create config directory: {}", e))?;
         }
     }
     fs::write(&path, config_json).map_err(|e| format!("Failed to save config: {}", e))?;
@@ -198,6 +209,10 @@ fn set_always_on_top(window: WebviewWindow, always_on_top: bool) -> Result<(), S
 
 #[tauri::command]
 fn set_window_mode(window: WebviewWindow, mode: String) -> Result<(), String> {
+    if !matches!(mode.as_str(), "widget" | "compact" | "flyout") {
+        return Err(format!("Unknown window mode: {}", mode));
+    }
+
     if let Some(monitor) = window.primary_monitor().map_err(|e| e.to_string())? {
         let scale_factor = monitor.scale_factor();
         let screen_size = monitor.size();
@@ -219,7 +234,7 @@ fn set_window_mode(window: WebviewWindow, mode: String) -> Result<(), String> {
                 let y = (screen_size.height as i32) - (h as i32) - margin_y;
                 let _ = window.set_position(PhysicalPosition::new(x, y));
             }
-            _ => {
+            "flyout" => {
                 let w = (430.0 * scale_factor) as u32;
                 let h = (690.0 * scale_factor) as u32;
                 let _ = window.set_size(PhysicalSize::new(w, h));
@@ -229,6 +244,7 @@ fn set_window_mode(window: WebviewWindow, mode: String) -> Result<(), String> {
                 let y = (screen_size.height as i32) - (h as i32) - margin_y;
                 let _ = window.set_position(PhysicalPosition::new(x, y));
             }
+            _ => unreachable!(),
         }
     }
     Ok(())
