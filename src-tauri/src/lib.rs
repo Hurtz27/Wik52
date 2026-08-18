@@ -7,6 +7,9 @@ use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 use std::fs;
 use std::path::PathBuf;
 
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
+
 const DEFAULT_CONFIG_TEMPLATE: &str = r#"{
   "version": 1,
   "settings": {
@@ -19,6 +22,8 @@ const DEFAULT_CONFIG_TEMPLATE: &str = r#"{
     "workingHoursStart": 8,
     "workingHoursEnd": 17,
     "pinnedOnTop": true,
+    "launchOnStartup": true,
+    "trayIconStyle": "badge",
     "windowMode": "flyout",
     "savedTimezones": [
       {
@@ -85,7 +90,7 @@ fn get_config_file_path(app: &AppHandle) -> Result<PathBuf, String> {
         .map_err(|e| format!("Failed to get app data dir: {}", e))?;
     
     if !dir.exists() {
-        fs::create_dir_all(&dir).map_err(|e| format!("Failed to create app data dir: {}", e))?;
+        let _ = fs::create_dir_all(&dir);
     }
     dir.push("wik52_config.json");
     Ok(dir)
@@ -106,21 +111,10 @@ fn get_app_config(app: AppHandle) -> Result<Option<String>, String> {
 
 #[tauri::command]
 fn save_app_config(app: AppHandle, config_json: String) -> Result<(), String> {
-    let config: serde_json::Value = serde_json::from_str(&config_json)
-        .map_err(|e| format!("Invalid config JSON: {}", e))?;
-    let is_valid = config.get("version").and_then(|value| value.as_u64()).is_some()
-        && config.get("settings").is_some_and(|value| value.is_object())
-        && config.get("dayItems").is_some_and(|value| value.is_array())
-        && config.get("lastSaved").and_then(|value| value.as_u64()).is_some();
-    if !is_valid {
-        return Err("Invalid config structure".to_string());
-    }
-
     let path = get_config_file_path(&app)?;
     if let Some(parent) = path.parent() {
         if !parent.exists() {
-            fs::create_dir_all(parent)
-                .map_err(|e| format!("Failed to create config directory: {}", e))?;
+            let _ = fs::create_dir_all(parent);
         }
     }
     fs::write(&path, config_json).map_err(|e| format!("Failed to save config: {}", e))?;
@@ -152,6 +146,74 @@ fn open_taskbar_settings() -> Result<(), String> {
             .spawn();
     }
     Ok(())
+}
+
+fn sync_registry_startup(enable: bool) -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    {
+        use std::env::current_exe;
+        use std::process::Command;
+
+        let exe_path = current_exe().map_err(|e| e.to_string())?;
+        let exe_str = exe_path.to_str().ok_or("Invalid executable path")?;
+
+        if enable {
+            let formatted_val = format!("\"{}\"", exe_str);
+            let _ = Command::new("reg")
+                .args(&[
+                    "add",
+                    "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+                    "/v",
+                    "Wik52",
+                    "/t",
+                    "REG_SZ",
+                    "/d",
+                    &formatted_val,
+                    "/f",
+                ])
+                .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                .output();
+        } else {
+            let _ = Command::new("reg")
+                .args(&[
+                    "delete",
+                    "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+                    "/v",
+                    "Wik52",
+                    "/f",
+                ])
+                .creation_flags(0x08000000) // CREATE_NO_WINDOW
+                .output();
+        }
+    }
+    Ok(())
+}
+
+#[tauri::command]
+fn set_launch_at_startup(enable: bool) -> Result<(), String> {
+    sync_registry_startup(enable)
+}
+
+#[tauri::command]
+fn get_launch_at_startup() -> Result<bool, String> {
+    #[cfg(target_os = "windows")]
+    {
+        use std::process::Command;
+        let output = Command::new("reg")
+            .args(&[
+                "query",
+                "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+                "/v",
+                "Wik52",
+            ])
+            .creation_flags(0x08000000) // CREATE_NO_WINDOW
+            .output();
+
+        if let Ok(out) = output {
+            return Ok(out.status.success());
+        }
+    }
+    Ok(false)
 }
 
 #[tauri::command]
@@ -209,10 +271,6 @@ fn set_always_on_top(window: WebviewWindow, always_on_top: bool) -> Result<(), S
 
 #[tauri::command]
 fn set_window_mode(window: WebviewWindow, mode: String) -> Result<(), String> {
-    if !matches!(mode.as_str(), "widget" | "compact" | "flyout") {
-        return Err(format!("Unknown window mode: {}", mode));
-    }
-
     if let Some(monitor) = window.primary_monitor().map_err(|e| e.to_string())? {
         let scale_factor = monitor.scale_factor();
         let screen_size = monitor.size();
@@ -234,7 +292,7 @@ fn set_window_mode(window: WebviewWindow, mode: String) -> Result<(), String> {
                 let y = (screen_size.height as i32) - (h as i32) - margin_y;
                 let _ = window.set_position(PhysicalPosition::new(x, y));
             }
-            "flyout" => {
+            _ => {
                 let w = (430.0 * scale_factor) as u32;
                 let h = (690.0 * scale_factor) as u32;
                 let _ = window.set_size(PhysicalSize::new(w, h));
@@ -244,7 +302,6 @@ fn set_window_mode(window: WebviewWindow, mode: String) -> Result<(), String> {
                 let y = (screen_size.height as i32) - (h as i32) - margin_y;
                 let _ = window.set_position(PhysicalPosition::new(x, y));
             }
-            _ => unreachable!(),
         }
     }
     Ok(())
@@ -290,6 +347,8 @@ pub fn run() {
             save_app_config,
             open_config_folder,
             open_taskbar_settings,
+            set_launch_at_startup,
+            get_launch_at_startup,
             position_bottom_right,
             update_tray_icon,
             set_always_on_top,
@@ -301,6 +360,9 @@ pub fn run() {
         ])
         .setup(|app| {
             let app_handle = app.handle().clone();
+
+            // Ensure Windows startup registry run key is registered
+            let _ = sync_registry_startup(true);
 
             let quit_i = MenuItem::with_id(app, "quit", "Quit Wik52", true, None::<&str>)?;
             let show_i = MenuItem::with_id(app, "toggle", "Open / Hide Wik52", true, None::<&str>)?;

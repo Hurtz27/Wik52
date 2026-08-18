@@ -16,6 +16,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   workingHoursStart: 8,
   workingHoursEnd: 17,
   pinnedOnTop: true,
+  launchOnStartup: true,
   trayIconStyle: 'badge',
   windowMode: 'flyout',
   savedTimezones: DEFAULT_INITIAL_TIMEZONES,

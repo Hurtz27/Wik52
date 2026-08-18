@@ -173,6 +173,13 @@ export function App() {
     }
   }, [settings.pinnedOnTop]);
 
+  // Sync automatic Windows startup
+  useEffect(() => {
+    if (settings.launchOnStartup !== undefined) {
+      invoke('set_launch_at_startup', { enable: settings.launchOnStartup }).catch(() => {});
+    }
+  }, [settings.launchOnStartup]);
+
   // Load holidays for the view year, enabled countries, and enabled categories
   useEffect(() => {
     const year = viewDate.getFullYear();

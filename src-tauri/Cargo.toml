@@ -1,6 +1,6 @@
 [package]
 name = "wik52"
-version = "0.1.1"
+version = "0.1.2"
 description = "Wik52 - Lightweight Corporate Calendar, Weeks & Time Zones"
 authors = ["Wik52"]
 edition = "2021"

@@ -97,6 +97,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     onShowToast(`Tray icon style set to ${style}`);
   };
 
+  const handleToggleLaunchOnStartup = async () => {
+    const nextVal = !(settings.launchOnStartup ?? true);
+    onUpdateSettings({ launchOnStartup: nextVal });
+    try {
+      await invoke('set_launch_at_startup', { enable: nextVal });
+      onShowToast(`Launch at Windows startup ${nextVal ? 'enabled' : 'disabled'}`);
+    } catch {
+      onShowToast('Could not update startup settings');
+    }
+  };
+
   const handleOpenTaskbarSettings = async () => {
     try {
       await invoke('open_taskbar_settings');
@@ -184,7 +195,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 border: '1px solid var(--border-subtle)',
               }}
             >
-              v0.1.1
+              v0.1.2
             </span>
             <button className="icon-button" onClick={onClose}>
               <X size={14} />
@@ -425,13 +436,47 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               marginTop: '4px',
             }}
           >
-            <FolderOpen size={12} color="var(--accent-cyan)" />
-            <span>Open Data Folder in Explorer (Backup)</span>
-          </button>
-        </div>
+              <FolderOpen size={12} color="var(--accent-cyan)" />
+              <span>Open Data Folder in Explorer (Backup)</span>
+            </button>
+          </div>
 
-        {/* 7. Tray Icon Style & Taskbar Visibility */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          {/* 7. Windows Startup Auto-Launch */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)' }}>
+              Windows System Startup
+            </label>
+            <button
+              onClick={handleToggleLaunchOnStartup}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '8px 10px',
+                borderRadius: 'var(--radius-sm)',
+                background: (settings.launchOnStartup ?? true) ? 'var(--week-badge-bg)' : 'var(--bg-card)',
+                border: (settings.launchOnStartup ?? true) ? '1px solid var(--accent-cyan)' : '1px solid var(--border-subtle)',
+                color: 'var(--text-primary)',
+                fontSize: '11px',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              <span>🚀 Start Wik52 automatically when Windows turns on</span>
+              <span
+                style={{
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  color: (settings.launchOnStartup ?? true) ? 'var(--accent-cyan)' : 'var(--text-muted)',
+                }}
+              >
+                {(settings.launchOnStartup ?? true) ? 'ENABLED' : 'DISABLED'}
+              </span>
+            </button>
+          </div>
+
+          {/* 8. Tray Icon Style & Taskbar Visibility */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
           <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)' }}>
             Taskbar Tray Icon Style (Week)
           </label>

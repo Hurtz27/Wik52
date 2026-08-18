@@ -43,6 +43,7 @@ export interface AppSettings {
   workingHoursStart: number; // e.g. 8
   workingHoursEnd: number;   // e.g. 17
   pinnedOnTop: boolean;
+  launchOnStartup: boolean;
   trayIconStyle?: 'badge' | 'calendar' | 'minimal';
   windowMode: 'flyout' | 'widget' | 'compact';
   savedTimezones: TimezoneItem[];
