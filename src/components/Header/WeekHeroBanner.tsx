@@ -3,6 +3,7 @@ import { Copy } from 'lucide-react';
 import { format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import { getWeekInfo, getYearMetrics } from '../../utils/weekCalculator';
+import { startWindowDrag } from '../../utils/dragHelper';
 
 interface WeekHeroBannerProps {
   currentDate: Date;
@@ -29,16 +30,21 @@ export const WeekHeroBanner: React.FC<WeekHeroBannerProps> = ({
   };
 
   return (
-    <div className="week-hero-card">
-      <div className="week-hero-top">
-        <div>
-          <div className="week-hero-number">
+    <div
+      className="week-hero-card"
+      data-tauri-drag-region
+      onMouseDown={startWindowDrag}
+      style={{ cursor: 'grab' }}
+    >
+      <div className="week-hero-top" data-tauri-drag-region>
+        <div data-tauri-drag-region>
+          <div className="week-hero-number" data-tauri-drag-region>
             <span>WEEK {weekInfo.weekNumber}</span>
             <span style={{ fontSize: '15px', fontWeight: 600, opacity: 0.85 }}>
               / {metrics.totalWeeks}
             </span>
           </div>
-          <div className="week-hero-sub">
+          <div className="week-hero-sub" data-tauri-drag-region>
             {startStr} – {endStr}
           </div>
         </div>
@@ -49,14 +55,14 @@ export const WeekHeroBanner: React.FC<WeekHeroBannerProps> = ({
         </button>
       </div>
 
-      <div className="week-progress-track">
+      <div className="week-progress-track" data-tauri-drag-region>
         <div
           className="week-progress-fill"
           style={{ width: `${metrics.yearProgressPercent}%` }}
         />
       </div>
 
-      <div className="week-hero-stats">
+      <div className="week-hero-stats" data-tauri-drag-region>
         <span>
           <strong>{metrics.yearProgressPercent}%</strong> of {metrics.year}
         </span>

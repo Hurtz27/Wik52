@@ -2,6 +2,7 @@ import React from 'react';
 import { Calendar, Settings, Pin, X, Minus, Smartphone, Minimize2 } from 'lucide-react';
 import { invoke } from '@tauri-apps/api/core';
 import { AppSettings } from '../../types/calendar';
+import { startWindowDrag } from '../../utils/dragHelper';
 
 interface TitleBarProps {
   settings: AppSettings;
@@ -50,8 +51,8 @@ export const TitleBar: React.FC<TitleBarProps> = ({
   };
 
   return (
-    <div className="titlebar" data-tauri-drag-region>
-      <div className="titlebar-drag" data-tauri-drag-region>
+    <div className="titlebar" data-tauri-drag-region onMouseDown={startWindowDrag}>
+      <div className="titlebar-drag" data-tauri-drag-region onMouseDown={startWindowDrag}>
         <Calendar size={14} color="var(--accent-cyan)" />
         <span style={{ fontWeight: 800, letterSpacing: '-0.3px', fontSize: '13.5px' }}>Wik52</span>
       </div>

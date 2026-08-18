@@ -251,6 +251,11 @@ fn set_window_mode(window: WebviewWindow, mode: String) -> Result<(), String> {
 }
 
 #[tauri::command]
+fn start_drag(window: WebviewWindow) -> Result<(), String> {
+    window.start_dragging().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 fn hide_window(window: WebviewWindow) -> Result<(), String> {
     window.hide().map_err(|e| e.to_string())
 }
@@ -289,6 +294,7 @@ pub fn run() {
             update_tray_icon,
             set_always_on_top,
             set_window_mode,
+            start_drag,
             hide_window,
             show_window,
             toggle_window

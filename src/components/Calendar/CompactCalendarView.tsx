@@ -6,6 +6,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { AppSettings, DayItem } from '../../types/calendar';
 import { generateMonthGrid, getWeekNumber } from '../../utils/weekCalculator';
 import { Holiday, formatDateKey } from '../../utils/holidayService';
+import { startWindowDrag } from '../../utils/dragHelper';
 
 interface CompactCalendarViewProps {
   currentDate: Date;
@@ -109,8 +110,14 @@ export const CompactCalendarView: React.FC<CompactCalendarViewProps> = ({
     }
   };
 
-  const handleTogglePin = () => {
-    onUpdateSettings({ pinnedOnTop: !settings.pinnedOnTop });
+  const handleTogglePin = async () => {
+    const nextPin = !settings.pinnedOnTop;
+    onUpdateSettings({ pinnedOnTop: nextPin });
+    try {
+      await invoke('set_always_on_top', { alwaysOnTop: nextPin });
+    } catch (e) {
+      console.debug('Failed to set always on top:', e);
+    }
   };
 
   const dayHeaders =
@@ -126,8 +133,18 @@ export const CompactCalendarView: React.FC<CompactCalendarViewProps> = ({
       style={{ width: '100vw', height: '100vh', padding: 0, overflow: 'hidden' }}
     >
       {/* Compact TitleBar (Draggable) */}
-      <div className="titlebar" data-tauri-drag-region style={{ height: '34px', padding: '4px 10px' }}>
-        <div className="titlebar-drag" data-tauri-drag-region style={{ gap: '6px' }}>
+      <div
+        className="titlebar"
+        data-tauri-drag-region
+        onMouseDown={startWindowDrag}
+        style={{ height: '34px', padding: '4px 10px' }}
+      >
+        <div
+          className="titlebar-drag"
+          data-tauri-drag-region
+          onMouseDown={startWindowDrag}
+          style={{ gap: '6px' }}
+        >
           <Calendar size={14} color="var(--accent-cyan)" />
           <span style={{ fontWeight: 800, fontSize: '12.5px' }}>Wik52</span>
           <span

@@ -2,8 +2,8 @@ import React from 'react';
 import { Maximize2, GripVertical } from 'lucide-react';
 import { format } from 'date-fns';
 import { invoke } from '@tauri-apps/api/core';
-import { getCurrentWindow } from '@tauri-apps/api/window';
 import { getWeekNumber } from '../../utils/weekCalculator';
+import { startWindowDrag } from '../../utils/dragHelper';
 
 interface FloatingPillProps {
   currentDate: Date;
@@ -21,18 +21,6 @@ export const FloatingPill: React.FC<FloatingPillProps> = ({
   const weekNumber = getWeekNumber(currentDate, firstDayOfWeek);
   const timeStr = format(currentDate, use24Hour ? 'HH:mm' : 'hh:mm a');
 
-  const handleStartDrag = async (e: React.MouseEvent) => {
-    // Only primary mouse button
-    if (e.button === 0) {
-      try {
-        const appWindow = getCurrentWindow();
-        await appWindow.startDragging();
-      } catch (err) {
-        console.debug('Native drag fallback:', err);
-      }
-    }
-  };
-
   const handleExpand = async () => {
     onExpand();
     try {
@@ -46,13 +34,14 @@ export const FloatingPill: React.FC<FloatingPillProps> = ({
     <div
       className="floating-pill"
       data-tauri-drag-region
-      onMouseDown={handleStartDrag}
+      onMouseDown={startWindowDrag}
       onDoubleClick={handleExpand}
       title="Click and drag to move anywhere • Double-click or click icon to expand"
     >
       <div
         style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'grab' }}
         data-tauri-drag-region
+        onMouseDown={startWindowDrag}
       >
         <GripVertical size={13} color="var(--text-muted)" style={{ opacity: 0.7 }} />
         <span
