@@ -12,6 +12,7 @@ import {
   FolderOpen,
   HardDrive,
   Calendar,
+  Eye,
 } from 'lucide-react';
 import { AppSettings, AccentColor, HolidayType } from '../../types/calendar';
 import { DEFAULT_INITIAL_TIMEZONES } from '../../utils/timezoneData';
@@ -110,6 +111,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     onShowToast(`Tray icon style set to ${style}`);
   };
 
+  const handleOpacityChange = (val: number) => {
+    onUpdateSettings({ windowOpacity: val });
+  };
+
   const handleToggleLaunchOnStartup = async () => {
     const nextVal = !(settings.launchOnStartup ?? true);
     onUpdateSettings({ launchOnStartup: nextVal });
@@ -147,6 +152,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       use24HourFormat: false,
       pinnedOnTop: true,
       launchOnStartup: true,
+      windowOpacity: 0.94,
       workingHoursStart: 8,
       workingHoursEnd: 17,
       windowMode: 'flyout',
@@ -157,6 +163,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     });
     onShowToast('Settings reset to defaults');
   };
+
+  const currentOpacityPercent = Math.round((settings.windowOpacity ?? 0.94) * 100);
 
   return (
     <div
@@ -177,7 +185,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         style={{
           width: '100%',
           maxWidth: '420px',
-          height: '575px', // Exact consistent height across all tabs
+          height: '595px', // Exact consistent height across all tabs
           background: 'var(--bg-app)',
           border: '1px solid var(--border-accent)',
           borderRadius: 'var(--radius-lg)',
@@ -210,7 +218,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 border: '1px solid var(--border-subtle)',
               }}
             >
-              v0.1.3
+              v0.1.4
             </span>
             <button className="icon-button" onClick={onClose}>
               <X size={14} />
@@ -361,7 +369,79 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </button>
               </div>
 
-              {/* 3. Taskbar Tray Icon Style & Taskbar Visibility */}
+              {/* 3. Window Background Opacity & Transparency Control */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                    <Eye size={13} color="var(--accent-cyan)" />
+                    <span>Window Background Opacity (Glass)</span>
+                  </div>
+                  <span
+                    style={{
+                      fontSize: '10.5px',
+                      fontFamily: 'var(--font-mono)',
+                      fontWeight: 700,
+                      color: 'var(--accent-cyan)',
+                      background: 'var(--week-badge-bg)',
+                      padding: '1px 6px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--border-subtle)',
+                    }}
+                  >
+                    {currentOpacityPercent}%
+                  </span>
+                </div>
+
+                {/* Range Slider */}
+                <input
+                  type="range"
+                  min="50"
+                  max="100"
+                  step="1"
+                  value={currentOpacityPercent}
+                  onChange={(e) => handleOpacityChange(Number(e.target.value) / 100)}
+                  style={{
+                    width: '100%',
+                    accentColor: 'var(--accent-cyan)',
+                    cursor: 'pointer',
+                    height: '5px',
+                    borderRadius: 'var(--radius-full)',
+                    background: 'var(--bg-subtle)',
+                  }}
+                />
+
+                {/* Quick Presets */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '5px', marginTop: '2px' }}>
+                  {[
+                    { label: 'Glass (70%)', val: 0.70 },
+                    { label: 'Fluent (85%)', val: 0.85 },
+                    { label: 'Balanced (94%)', val: 0.94 },
+                    { label: 'Solid (100%)', val: 1.00 },
+                  ].map((preset) => {
+                    const isSelected = Math.abs((settings.windowOpacity ?? 0.94) - preset.val) < 0.02;
+                    return (
+                      <button
+                        key={preset.label}
+                        onClick={() => handleOpacityChange(preset.val)}
+                        style={{
+                          padding: '4px 2px',
+                          borderRadius: 'var(--radius-xs)',
+                          background: isSelected ? 'var(--week-badge-bg)' : 'var(--bg-card)',
+                          border: isSelected ? '1px solid var(--accent-cyan)' : '1px solid var(--border-subtle)',
+                          color: isSelected ? 'var(--accent-cyan)' : 'var(--text-secondary)',
+                          fontSize: '10px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {preset.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 4. Taskbar Tray Icon Style & Taskbar Visibility */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)' }}>
                   Taskbar Tray Icon Style (Week)
@@ -410,7 +490,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </button>
               </div>
 
-              {/* 4. UI Theme Accent Color */}
+              {/* 5. UI Theme Accent Color */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: '4px', borderTop: '1px solid var(--border-subtle)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)' }}>
                   <Palette size={14} color="var(--accent-cyan)" />
@@ -456,7 +536,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </div>
               </div>
 
-              {/* 5. Reset to Defaults */}
+              {/* 6. Reset to Defaults */}
               <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '6px', borderTop: '1px solid var(--border-subtle)' }}>
                 <button
                   onClick={handleResetDefaults}

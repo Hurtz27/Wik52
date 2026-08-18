@@ -130,7 +130,13 @@ export const CompactCalendarView: React.FC<CompactCalendarViewProps> = ({
       className={`flyout-container accent-${settings.accentColor || 'blue'} ${
         settings.theme === 'light' ? 'light-theme' : ''
       }`}
-      style={{ width: '100vw', height: '100vh', padding: 0, overflow: 'hidden' }}
+      style={{
+        width: '100vw',
+        height: '100vh',
+        padding: 0,
+        overflow: 'hidden',
+        '--window-opacity': settings.windowOpacity ?? 0.94,
+      } as React.CSSProperties}
     >
       {/* Compact TitleBar (Draggable) */}
       <div

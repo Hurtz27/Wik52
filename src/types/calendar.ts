@@ -44,6 +44,7 @@ export interface AppSettings {
   workingHoursEnd: number;   // e.g. 17
   pinnedOnTop: boolean;
   launchOnStartup: boolean;
+  windowOpacity?: number; // 0.50 to 1.0 (e.g. 0.94)
   trayIconStyle?: 'badge' | 'calendar' | 'minimal';
   windowMode: 'flyout' | 'widget' | 'compact';
   savedTimezones: TimezoneItem[];

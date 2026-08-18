@@ -299,6 +299,7 @@ export function App() {
       className={`flyout-container ${accentClass} ${
         settings.theme === 'light' ? 'light-theme' : ''
       }`}
+      style={{ '--window-opacity': settings.windowOpacity ?? 0.94 } as React.CSSProperties}
     >
       {/* 1. Windows 11 TitleBar (Fixed at Top) */}
       <TitleBar

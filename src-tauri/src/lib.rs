@@ -23,6 +23,7 @@ const DEFAULT_CONFIG_TEMPLATE: &str = r#"{
     "workingHoursEnd": 17,
     "pinnedOnTop": true,
     "launchOnStartup": true,
+    "windowOpacity": 0.94,
     "trayIconStyle": "badge",
     "windowMode": "flyout",
     "savedTimezones": [
